@@ -7,24 +7,47 @@ import ImageIcon from "@mui/icons-material/Image";
 import SubscriptionsIcon from "@mui/icons-material/Subscriptions";
 import EventNoteIcon from "@mui/icons-material/EventNote";
 import CalendarViewDayIcon from "@mui/icons-material/CalendarViewDay";
-import { db } from "./Firebase";
+import { db } from "./firebase";
+import {
+  onSnapshot,
+  collection,
+  addDoc,
+  serverTimestamp,
+} from "firebase/firestore";
 
 function Feed() {
+  const [input, setInput] = useState("");
   const [posts, setPosts] = useState([]);
 
   useEffect(() => {
-    db.collection("posts").onSnapshot((snapshot) =>
+    const unsubscribe = onSnapshot(collection(db, "posts"), (snapshot) => {
       setPosts(
         snapshot.docs.map((doc) => ({
           id: doc.id,
           data: doc.data(),
         }))
-      )
-    );
+      );
+    });
+
+    return () => {
+      unsubscribe();
+    };
   }, []);
 
-  const sendPost = (e) => {
+  const sendPost = async (e) => {
     e.preventDefault();
+
+    try {
+      await addDoc(collection(db, "posts"), {
+        name: "Omole Daniel",
+        description: "this is a test",
+        message: input,
+        photoUrl: "",
+        timestamp: serverTimestamp(), // or use Firebase server timestamp
+      });
+    } catch (error) {
+      console.error("Error adding document: ", error);
+    }
   };
 
   return (
@@ -33,7 +56,11 @@ function Feed() {
         <div className="feed_input">
           <CreateIcon />
           <form>
-            <input type="text" />
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              type="text"
+            />
             <button onClick={sendPost} type="submit">
               Send
             </button>
@@ -51,15 +78,15 @@ function Feed() {
         </div>
       </div>
 
-      {posts.map((post) => (
-        <Post />
+      {posts.map(({ id, data: { name, description, message, photoUrl } }) => (
+        <Post
+          key={id}
+          name={name}
+          description={description}
+          message={message}
+          photoUrl={photoUrl}
+        />
       ))}
-
-      <Post
-        name="Daniel Omole"
-        description="This is a test"
-        message="WOW this worked"
-      />
     </div>
   );
 }
