@@ -45,6 +45,9 @@ function Feed() {
         photoUrl: "",
         timestamp: serverTimestamp(), // or use Firebase server timestamp
       });
+
+      // Reset the input field after sending the post
+      setInput("");
     } catch (error) {
       console.error("Error adding document: ", error);
     }
